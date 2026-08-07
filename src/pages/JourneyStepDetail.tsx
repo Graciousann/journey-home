@@ -10,9 +10,12 @@ import {
   getListStepNotesQueryKey,
   getListJourneyStepsQueryKey,
   getGetJourneyProgressQueryKey,
+  useStepChecklist,
+  useSetStepChecklistItem,
+  getStepChecklistQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -65,6 +68,10 @@ export default function JourneyStepDetail() {
   const queryClient = useQueryClient();
   const [noteText, setNoteText] = useState("");
 
+  useEffect(() => {
+    setNoteText("");
+  }, [id, stepNumber]);
+
   const { data: journey } = useGetJourney(id, {
     query: { enabled: !!id, queryKey: ["getJourney", id] },
   });
@@ -74,10 +81,14 @@ export default function JourneyStepDetail() {
   const { data: notes, isLoading: loadingNotes } = useListStepNotes(id, stepNumber, {
     query: { enabled: !!id && !!stepNumber, queryKey: getListStepNotesQueryKey(id, stepNumber) },
   });
+  const { data: checkedItems = {} } = useStepChecklist(id, stepNumber, {
+    query: { enabled: !!id && !!stepNumber },
+  });
 
   const updateStep = useUpdateJourneyStep();
   const createNote = useCreateStepNote();
   const deleteNote = useDeleteStepNote();
+  const setChecklistItem = useSetStepChecklistItem();
 
   const journeyType = journey?.type ?? "buyer";
   const totalSteps = journeyType === "both" ? 12 : 8;
@@ -92,6 +103,7 @@ export default function JourneyStepDetail() {
           queryClient.invalidateQueries({ queryKey: getGetJourneyStepQueryKey(id, stepNumber) });
           queryClient.invalidateQueries({ queryKey: getListJourneyStepsQueryKey(id) });
           queryClient.invalidateQueries({ queryKey: getGetJourneyProgressQueryKey(id) });
+          queryClient.invalidateQueries({ queryKey: ["journey", id] });
         },
       }
     );
@@ -122,9 +134,11 @@ export default function JourneyStepDetail() {
     );
   };
 
-  const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
   const toggleCheck = (idx: number) => {
-    setCheckedItems(prev => ({ ...prev, [idx]: !prev[idx] }));
+    setChecklistItem.mutate(
+      { id, stepNumber, itemIndex: idx, isChecked: !checkedItems[idx] },
+      { onSuccess: () => queryClient.invalidateQueries({ queryKey: getStepChecklistQueryKey(id, stepNumber) }) },
+    );
   };
 
   if (loadingStep) {
@@ -295,17 +309,20 @@ export default function JourneyStepDetail() {
                 {content.checklist.map((item: string, i: number) => {
                   const isChecked = checkedItems[i];
                   return (
-                    <li 
-                      key={i} 
-                      className={`flex items-start gap-4 p-3 rounded-xl cursor-pointer transition-all border-2 ${isChecked ? "bg-primary/5 border-primary/20" : "hover:bg-muted border-transparent"}`}
-                      onClick={() => toggleCheck(i)}
-                    >
-                      <div className={`mt-0.5 h-6 w-6 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors ${isChecked ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground/30 bg-background"}`}>
-                        {isChecked && <CheckCircle2 className="h-4 w-4" />}
-                      </div>
-                      <span className={`text-base select-none transition-all ${isChecked ? "text-foreground line-through opacity-70" : "text-foreground"}`}>
-                        {item}
-                      </span>
+                    <li key={i}>
+                      <button
+                        type="button"
+                        aria-pressed={isChecked}
+                        onClick={() => toggleCheck(i)}
+                        className={`w-full text-left flex items-start gap-4 p-3 rounded-xl cursor-pointer transition-all border-2 ${isChecked ? "bg-primary/5 border-primary/20" : "hover:bg-muted border-transparent"}`}
+                      >
+                        <span className={`mt-0.5 h-6 w-6 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors ${isChecked ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground/30 bg-background"}`}>
+                          {isChecked && <CheckCircle2 className="h-4 w-4" />}
+                        </span>
+                        <span className={`text-base select-none transition-all ${isChecked ? "text-foreground line-through opacity-70" : "text-foreground"}`}>
+                          {item}
+                        </span>
+                      </button>
                     </li>
                   );
                 })}

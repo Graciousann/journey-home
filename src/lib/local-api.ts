@@ -7,13 +7,16 @@ export type Journey = { id: number; userName: string; type: JourneyType; created
 type Step = { id: number; journeyId: number; stepNumber: number; title: string; status: StepStatus; completedAt: string | null };
 type Note = { id: number; journeyId: number; stepNumber: number; content: string; createdAt: string };
 type DocumentState = { docKey: string; isChecked: boolean };
-type Store = { journeys: Journey[]; steps: Step[]; notes: Note[]; documents: Record<string, DocumentState[]> };
+type Store = { journeys: Journey[]; steps: Step[]; notes: Note[]; documents: Record<string, DocumentState[]>; stepChecklists: Record<string, boolean> };
 
 const KEY = "home-journey-v1";
-const emptyStore = (): Store => ({ journeys: [], steps: [], notes: [], documents: {} });
+const emptyStore = (): Store => ({ journeys: [], steps: [], notes: [], documents: {}, stepChecklists: {} });
 const read = (): Store => {
   if (typeof window === "undefined") return emptyStore();
-  try { return JSON.parse(localStorage.getItem(KEY) || "null") || emptyStore(); } catch { return emptyStore(); }
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY) || "null");
+    return saved ? { ...emptyStore(), ...saved, stepChecklists: saved.stepChecklists || {} } : emptyStore();
+  } catch { return emptyStore(); }
 };
 const write = (store: Store) => localStorage.setItem(KEY, JSON.stringify(store));
 const nextId = (items: { id: number }[]) => Math.max(0, ...items.map((item) => item.id)) + 1;
@@ -26,6 +29,7 @@ export const getGetJourneyProgressQueryKey = (id: number) => ["journey", id, "pr
 export const getGetJourneyStepQueryKey = (id: number, step: number) => ["journey", id, "step", step];
 export const getListStepNotesQueryKey = (id: number, step: number) => ["journey", id, "step", step, "notes"];
 export const getListJourneyDocumentsQueryKey = (id: number) => ["journey", id, "documents"];
+export const getStepChecklistQueryKey = (id: number, step: number) => ["journey", id, "step", step, "checklist"];
 
 export const useListJourneys = () => useQuery({ queryKey: getListJourneysQueryKey(), queryFn: () => done(read().journeys) });
 export const useCreateJourney = () => useMutation({ mutationFn: ({ data }: { data: { userName: string; type: JourneyType } }) => {
@@ -45,11 +49,13 @@ export const useResetJourney = () => useMutation({ mutationFn: ({ id }: { id: nu
   const store = read(); const journey = store.journeys.find((j) => j.id === id); if (!journey) throw new Error("Journey not found");
   journey.currentStep = 1; journey.closingDate = undefined;
   store.steps.filter((s) => s.journeyId === id).forEach((step) => { step.status = step.stepNumber === 1 ? "in_progress" : "not_started"; step.completedAt = null; });
-  store.notes = store.notes.filter((n) => n.journeyId !== id); delete store.documents[String(id)]; write(store); return done(journey);
+  store.notes = store.notes.filter((n) => n.journeyId !== id); delete store.documents[String(id)];
+  Object.keys(store.stepChecklists).filter((key) => key.startsWith(`${id}:`)).forEach((key) => delete store.stepChecklists[key]);
+  write(store); return done(journey);
 } });
 export const exportJourneyData = (id: number) => {
   const store = read(); const journey = store.journeys.find((j) => j.id === id);
-  return { exportedAt: new Date().toISOString(), journey, steps: store.steps.filter((s) => s.journeyId === id), notes: store.notes.filter((n) => n.journeyId === id), documents: store.documents[String(id)] || [] };
+  return { exportedAt: new Date().toISOString(), journey, steps: store.steps.filter((s) => s.journeyId === id), notes: store.notes.filter((n) => n.journeyId === id), documents: store.documents[String(id)] || [], stepChecklists: Object.fromEntries(Object.entries(store.stepChecklists).filter(([key]) => key.startsWith(`${id}:`))) };
 };
 export const useListJourneySteps = (id: number, options?: any) => useQuery({ queryKey: getListJourneyStepsQueryKey(id), queryFn: () => done(read().steps.filter((s) => s.journeyId === id).sort((a,b) => a.stepNumber-b.stepNumber)), enabled: isEnabled(options) });
 export const useGetJourneyStep = (id: number, step: number, options?: any) => useQuery({ queryKey: getGetJourneyStepQueryKey(id, step), queryFn: () => done(read().steps.find((s) => s.journeyId === id && s.stepNumber === step)), enabled: isEnabled(options) });
@@ -68,6 +74,8 @@ export const useCreateStepNote = () => useMutation({ mutationFn: ({ id, stepNumb
 export const useDeleteStepNote = () => useMutation({ mutationFn: ({ noteId }: { id: number; stepNumber: number; noteId: number }) => { const store = read(); store.notes = store.notes.filter((n) => n.id !== noteId); write(store); return done(undefined); } });
 export const useListJourneyDocuments = (id: number, options?: any) => useQuery({ queryKey: getListJourneyDocumentsQueryKey(id), queryFn: () => done(read().documents[String(id)] || []), enabled: isEnabled(options) });
 export const useUpsertJourneyDocument = () => useMutation({ mutationFn: ({ id, docKey, data }: { id: number; docKey: string; data: { isChecked: boolean } }) => { const store = read(); const docs = store.documents[String(id)] || []; const found = docs.find((d) => d.docKey === docKey); if (found) found.isChecked = data.isChecked; else docs.push({ docKey, isChecked: data.isChecked }); store.documents[String(id)] = docs; write(store); return done({ docKey, isChecked: data.isChecked }); } });
+export const useStepChecklist = (id: number, step: number, options?: any) => useQuery({ queryKey: getStepChecklistQueryKey(id, step), queryFn: () => done(Object.fromEntries(Object.entries(read().stepChecklists).filter(([key]) => key.startsWith(`${id}:${step}:`)).map(([key, value]) => [Number(key.split(":")[2]), value])) as Record<number, boolean>), enabled: isEnabled(options) });
+export const useSetStepChecklistItem = () => useMutation({ mutationFn: ({ id, stepNumber, itemIndex, isChecked }: { id: number; stepNumber: number; itemIndex: number; isChecked: boolean }) => { const store = read(); store.stepChecklists[`${id}:${stepNumber}:${itemIndex}`] = isChecked; write(store); return done({ itemIndex, isChecked }); } });
 
 const glossary = [
   ["Appraisal", "An independent estimate of a property's market value, usually ordered by the lender.", "Valuation"],

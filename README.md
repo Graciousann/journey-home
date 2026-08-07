@@ -3,6 +3,7 @@
 A standalone, mobile-friendly real-estate roadmap for GraceAnn Visser's clients. It supports personalized buyer, seller, and combined journeys; next-best-action guidance; closing-date milestones; progress tracking; step notes; document checklists; local backups; printing; calculators; timelines; legal guidance; resources; and a searchable glossary.
 
 Journey information is stored privately in the visitor's browser. There is no account, database, or server-side client data.
+Each educational checklist is saved independently for its journey and roadmap step.
 
 ## Run locally
 
