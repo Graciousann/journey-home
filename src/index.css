@@ -158,6 +158,13 @@ button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
   }
 }
 
+@media print {
+  header, footer, button, a[href^="mailto:"], a[href^="tel:"] { display: none !important; }
+  body { background: white !important; color: #111 !important; }
+  main { padding: 0 !important; }
+  .shadow-xl, .shadow-lg, .shadow-md, .shadow-sm { box-shadow: none !important; }
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;

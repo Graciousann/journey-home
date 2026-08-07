@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Compass, BookOpen, Library, Home, Calculator, Clock, Scale, ChevronDown, Map } from "lucide-react";
+import { Compass, BookOpen, Library, Home, Calculator, Clock, Scale, ChevronDown, Map, Phone } from "lucide-react";
 import { ReactNode, useState, useRef, useEffect } from "react";
 
 const navItems = [
@@ -57,6 +57,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 </Link>
               );
             })}
+            <a href="tel:6157397804" className="ml-2 inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm font-bold hover:bg-primary/90">
+              <Phone className="h-4 w-4" /> Talk with GraceAnn
+            </a>
           </nav>
 
           <div className="lg:hidden relative" ref={menuRef}>
@@ -89,6 +92,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                       </Link>
                     );
                   })}
+                  <a href="tel:6157397804" className="flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl bg-primary text-primary-foreground" onClick={() => setMobileOpen(false)}><Phone className="h-5 w-5" />Talk with GraceAnn</a>
                 </div>
               </div>
             )}

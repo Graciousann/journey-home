@@ -35,8 +35,27 @@ import {
   Phone,
   Mail,
   Instagram,
+  UserRound,
+  CalendarClock,
+  HelpCircle,
+  ShieldCheck,
 } from "lucide-react";
 import { stepContent } from "@/lib/step-content";
+
+const stepSupport: Record<string, { owner: string; timing: string; questions: string[] }> = {
+  "Pre-Approval": { owner: "You and your lender", timing: "Before touring seriously · often 1–7 business days", questions: ["What is my comfortable monthly payment—not only my maximum approval?", "Which loan options and fees should I compare?", "What financial changes should I avoid before closing?"] },
+  "House Hunting": { owner: "You and GraceAnn", timing: "At your pace; revisit priorities after every 3–5 tours", questions: ["Which needs are non-negotiable?", "What future resale factors matter here?", "What property costs are not obvious from the listing?"] },
+  "Making an Offer": { owner: "You and GraceAnn", timing: "Decisions are often due within hours", questions: ["What do comparable sales support?", "Which contingencies protect me?", "What matters most to this seller besides price?"] },
+  "Home Inspection": { owner: "You, GraceAnn, and your inspector", timing: "Complete within the contract deadline", questions: ["Which findings affect safety or major systems?", "What should be repaired, credited, or monitored?", "Do we need a specialist or follow-up inspection?"] },
+  "Appraisal": { owner: "Your lender and appraiser", timing: "Often 1–2 weeks", questions: ["What happens if value is below the contract price?", "Does the report contain factual errors?", "What does my appraisal contingency allow?"] },
+  "Final Loan Approval": { owner: "You and your lender", timing: "Respond to requests within 24 hours", questions: ["Are any underwriting conditions still open?", "When will I receive the Closing Disclosure?", "Has my cash-to-close amount changed?"] },
+  "Closing Day": { owner: "You, GraceAnn, lender, and closing team", timing: "Review documents before the appointment", questions: ["Have wire instructions been verified by phone?", "Do final numbers match my expectations?", "When do possession and key transfer occur?"] },
+  "Moving In": { owner: "You", timing: "First day through the first month", questions: ["Where are the utility shutoffs and safety devices?", "Which records and warranties should I keep?", "What maintenance should I schedule first?"] },
+};
+
+function supportFor(title: string) {
+  return stepSupport[title] || { owner: "You and your real estate team", timing: "Confirm the exact deadline for your transaction", questions: ["What decision is required from me now?", "What deadline could affect my rights or costs?", "What should I document or keep for my records?"] };
+}
 
 export default function JourneyStepDetail() {
   const params = useParams<{ id: string; stepNumber: string }>();
@@ -63,6 +82,7 @@ export default function JourneyStepDetail() {
   const journeyType = journey?.type ?? "buyer";
   const totalSteps = journeyType === "both" ? 12 : 8;
   const content = (stepContent as any)[journeyType]?.[stepNumber];
+  const support = supportFor(content?.title ?? step?.title ?? "This step");
 
   const handleStatusChange = (status: "not_started" | "in_progress" | "completed") => {
     updateStep.mutate(
@@ -242,6 +262,26 @@ export default function JourneyStepDetail() {
             </CardContent>
           </Card>
 
+          <Card className="border-primary/20 bg-primary/5 rounded-2xl shadow-sm overflow-hidden">
+            <CardContent className="p-6 md:p-7">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary mb-3">Action brief</p>
+                  <div className="space-y-4 text-sm">
+                    <div className="flex items-start gap-3"><UserRound className="h-5 w-5 text-primary mt-0.5" /><div><p className="font-bold text-foreground">Who is involved</p><p className="text-muted-foreground mt-1">{support.owner}</p></div></div>
+                    <div className="flex items-start gap-3"><CalendarClock className="h-5 w-5 text-primary mt-0.5" /><div><p className="font-bold text-foreground">Timing</p><p className="text-muted-foreground mt-1">{support.timing}</p></div></div>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary mb-3 flex items-center gap-2"><HelpCircle className="h-4 w-4" />Questions worth asking</p>
+                  <ul className="space-y-3">
+                    {support.questions.map((question) => <li key={question} className="flex gap-3 text-sm text-foreground"><span className="text-primary font-bold">?</span><span>{question}</span></li>)}
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="border-border bg-card rounded-2xl shadow-sm opacity-0 animate-fade-in-up stagger-3 overflow-hidden">
             <div className="h-1 bg-accent w-full" />
             <CardHeader className="pb-3 pt-6">
@@ -304,6 +344,13 @@ export default function JourneyStepDetail() {
               </CardContent>
             </Card>
           </div>
+
+          <Card className="rounded-2xl border-accent/25 bg-accent/5">
+            <CardContent className="p-6 flex flex-col sm:flex-row sm:items-center gap-5 justify-between">
+              <div className="flex items-start gap-3"><ShieldCheck className="h-6 w-6 text-accent mt-0.5" /><div><h3 className="font-serif text-xl">You&apos;re ready to continue when…</h3><p className="text-muted-foreground mt-1">Your key questions are answered, required documents are saved, and your transaction-specific deadline is confirmed.</p></div></div>
+              <a href={`mailto:graceann@threshold.homes?subject=${encodeURIComponent(`Help with ${content.title}`)}&body=${encodeURIComponent(`Hi GraceAnn, I am working through ${content.title} in my Home Journey and would like your guidance.`)}`} className="flex-shrink-0"><Button className="rounded-xl"><Mail className="h-4 w-4 mr-2" />Ask GraceAnn</Button></a>
+            </CardContent>
+          </Card>
         </div>
       ) : (
         <Card className="border-border bg-card rounded-2xl border-dashed">

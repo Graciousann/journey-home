@@ -3,7 +3,7 @@ import { stepContent } from "./step-content";
 
 type JourneyType = "buyer" | "seller" | "both";
 type StepStatus = "not_started" | "in_progress" | "completed";
-type Journey = { id: number; userName: string; type: JourneyType; createdAt: string; currentStep: number };
+export type Journey = { id: number; userName: string; type: JourneyType; createdAt: string; currentStep: number; closingDate?: string };
 type Step = { id: number; journeyId: number; stepNumber: number; title: string; status: StepStatus; completedAt: string | null };
 type Note = { id: number; journeyId: number; stepNumber: number; content: string; createdAt: string };
 type DocumentState = { docKey: string; isChecked: boolean };
@@ -37,6 +37,20 @@ export const useCreateJourney = () => useMutation({ mutationFn: ({ data }: { dat
   write(store); return done(journey);
 } });
 export const useGetJourney = (id: number, options?: any) => useQuery({ queryKey: ["journey", id], queryFn: () => done(read().journeys.find((j) => j.id === id)), enabled: isEnabled(options) });
+export const useUpdateJourney = () => useMutation({ mutationFn: ({ id, data }: { id: number; data: Partial<Pick<Journey, "userName" | "closingDate">> }) => {
+  const store = read(); const journey = store.journeys.find((j) => j.id === id); if (!journey) throw new Error("Journey not found");
+  Object.assign(journey, data); write(store); return done(journey);
+} });
+export const useResetJourney = () => useMutation({ mutationFn: ({ id }: { id: number }) => {
+  const store = read(); const journey = store.journeys.find((j) => j.id === id); if (!journey) throw new Error("Journey not found");
+  journey.currentStep = 1; journey.closingDate = undefined;
+  store.steps.filter((s) => s.journeyId === id).forEach((step) => { step.status = step.stepNumber === 1 ? "in_progress" : "not_started"; step.completedAt = null; });
+  store.notes = store.notes.filter((n) => n.journeyId !== id); delete store.documents[String(id)]; write(store); return done(journey);
+} });
+export const exportJourneyData = (id: number) => {
+  const store = read(); const journey = store.journeys.find((j) => j.id === id);
+  return { exportedAt: new Date().toISOString(), journey, steps: store.steps.filter((s) => s.journeyId === id), notes: store.notes.filter((n) => n.journeyId === id), documents: store.documents[String(id)] || [] };
+};
 export const useListJourneySteps = (id: number, options?: any) => useQuery({ queryKey: getListJourneyStepsQueryKey(id), queryFn: () => done(read().steps.filter((s) => s.journeyId === id).sort((a,b) => a.stepNumber-b.stepNumber)), enabled: isEnabled(options) });
 export const useGetJourneyStep = (id: number, step: number, options?: any) => useQuery({ queryKey: getGetJourneyStepQueryKey(id, step), queryFn: () => done(read().steps.find((s) => s.journeyId === id && s.stepNumber === step)), enabled: isEnabled(options) });
 export const useGetJourneyProgress = (id: number, options?: any) => useQuery({ queryKey: getGetJourneyProgressQueryKey(id), queryFn: () => {

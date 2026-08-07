@@ -1,6 +1,6 @@
 # Home Journey
 
-A standalone, mobile-friendly real-estate roadmap for GraceAnn Visser's clients. It supports personalized buyer, seller, and combined journeys; progress tracking; step notes; document checklists; calculators; timelines; legal guidance; resources; and a searchable glossary.
+A standalone, mobile-friendly real-estate roadmap for GraceAnn Visser's clients. It supports personalized buyer, seller, and combined journeys; next-best-action guidance; closing-date milestones; progress tracking; step notes; document checklists; local backups; printing; calculators; timelines; legal guidance; resources; and a searchable glossary.
 
 Journey information is stored privately in the visitor's browser. There is no account, database, or server-side client data.
 
@@ -50,7 +50,9 @@ Replace `YOUR-USERNAME` with your GitHub username. If GitHub created the reposit
 4. Save and deploy.
 5. In the Pages project, open **Custom domains** to connect the final domain if desired.
 
-Cloudflare will rebuild the site whenever the `main` branch changes. The included `_redirects` file ensures direct links to roadmap pages work correctly.
+Cloudflare will rebuild the site whenever the `main` branch changes. The Wrangler configuration supplies the single-page-app routing fallback used by direct roadmap links.
+
+If the repository was connected as a Cloudflare Worker rather than a Pages project, the included `wrangler.jsonc` serves the `dist` build and provides the same single-page-app routing fallback.
 
 ## Before launch
 
