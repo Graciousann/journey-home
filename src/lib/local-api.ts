@@ -53,9 +53,33 @@ export const useResetJourney = () => useMutation({ mutationFn: ({ id }: { id: nu
   Object.keys(store.stepChecklists).filter((key) => key.startsWith(`${id}:`)).forEach((key) => delete store.stepChecklists[key]);
   write(store); return done(journey);
 } });
+export const useDeleteJourney = () => useMutation({ mutationFn: ({ id }: { id: number }) => {
+  const store = read();
+  store.journeys = store.journeys.filter((j) => j.id !== id);
+  store.steps = store.steps.filter((s) => s.journeyId !== id);
+  store.notes = store.notes.filter((n) => n.journeyId !== id);
+  delete store.documents[String(id)];
+  Object.keys(store.stepChecklists).filter((key) => key.startsWith(`${id}:`)).forEach((key) => delete store.stepChecklists[key]);
+  write(store); return done(undefined);
+} });
 export const exportJourneyData = (id: number) => {
   const store = read(); const journey = store.journeys.find((j) => j.id === id);
   return { exportedAt: new Date().toISOString(), journey, steps: store.steps.filter((s) => s.journeyId === id), notes: store.notes.filter((n) => n.journeyId === id), documents: store.documents[String(id)] || [], stepChecklists: Object.fromEntries(Object.entries(store.stepChecklists).filter(([key]) => key.startsWith(`${id}:`))) };
+};
+export const importJourneyData = (payload: unknown) => {
+  if (!payload || typeof payload !== "object") throw new Error("That file is not a Home Journey backup.");
+  const data = payload as any;
+  if (!data.journey || !Array.isArray(data.steps) || !["buyer", "seller", "both"].includes(data.journey.type)) {
+    throw new Error("That file is missing required Home Journey information.");
+  }
+  const store = read(); const oldId = Number(data.journey.id); const id = nextId(store.journeys);
+  const journey: Journey = { id, userName: String(data.journey.userName || "Restored journey").slice(0, 80), type: data.journey.type, createdAt: data.journey.createdAt || new Date().toISOString(), currentStep: Number(data.journey.currentStep) || 1, closingDate: data.journey.closingDate || undefined };
+  store.journeys.push(journey);
+  store.steps.push(...data.steps.map((step: any, index: number) => ({ id: nextId(store.steps) + index, journeyId: id, stepNumber: Number(step.stepNumber), title: String(step.title), status: (["not_started", "in_progress", "completed"].includes(step.status) ? step.status : "not_started") as StepStatus, completedAt: step.completedAt || null })));
+  if (Array.isArray(data.notes)) store.notes.push(...data.notes.map((note: any, index: number) => ({ id: nextId(store.notes) + index, journeyId: id, stepNumber: Number(note.stepNumber), content: String(note.content || "").slice(0, 5000), createdAt: note.createdAt || new Date().toISOString() })));
+  if (Array.isArray(data.documents)) store.documents[String(id)] = data.documents.filter((doc: any) => typeof doc?.docKey === "string").map((doc: any) => ({ docKey: doc.docKey, isChecked: !!doc.isChecked }));
+  if (data.stepChecklists && typeof data.stepChecklists === "object") Object.entries(data.stepChecklists).forEach(([key, value]) => { const parts = key.split(":"); if (Number(parts[0]) === oldId && parts.length === 3) store.stepChecklists[`${id}:${parts[1]}:${parts[2]}`] = !!value; });
+  write(store); return journey;
 };
 export const useListJourneySteps = (id: number, options?: any) => useQuery({ queryKey: getListJourneyStepsQueryKey(id), queryFn: () => done(read().steps.filter((s) => s.journeyId === id).sort((a,b) => a.stepNumber-b.stepNumber)), enabled: isEnabled(options) });
 export const useGetJourneyStep = (id: number, step: number, options?: any) => useQuery({ queryKey: getGetJourneyStepQueryKey(id, step), queryFn: () => done(read().steps.find((s) => s.journeyId === id && s.stepNumber === step)), enabled: isEnabled(options) });
