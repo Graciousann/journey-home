@@ -1,4 +1,4 @@
-import { Scale, AlertTriangle, CheckCircle2, FileText, DollarSign, Users, Info } from "lucide-react";
+import { Scale, AlertTriangle, CheckCircle2, FileText, DollarSign, Users, Info, ExternalLink, CalendarDays } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 function SectionCard({ icon: Icon, title, iconClass, borderClass, children }: { icon: any; title: string; iconClass?: string; borderClass?: string; children: React.ReactNode }) {
@@ -26,8 +26,9 @@ export default function LegalUpdates() {
           <h1 className="font-serif text-3xl md:text-4xl text-foreground">Know Your Rights</h1>
         </div>
         <p className="text-muted-foreground text-lg ml-10">
-          Recent landmark lawsuits have reshaped how real estate agents are compensated and how consumers must be represented. Here's what changed — and what it means for you.
+          Understand representation agreements, negotiable compensation, and the questions to ask before you commit. Rules and forms can vary by brokerage, MLS, transaction, and state.
         </p>
+        <p className="mt-4 ml-10 inline-flex items-center gap-2 text-xs font-bold text-primary bg-primary/8 border border-primary/15 rounded-full px-3 py-2"><CalendarDays className="h-4 w-4" />Educational content reviewed August 7, 2026</p>
       </div>
 
       <div className="space-y-8">
@@ -166,13 +167,26 @@ export default function LegalUpdates() {
           </div>
         </SectionCard>
 
+        <section className="rounded-2xl border border-border bg-card p-6" aria-labelledby="official-sources-title">
+          <h2 id="official-sources-title" className="font-serif text-2xl">Check the official sources</h2>
+          <p className="text-sm text-muted-foreground mt-2">These links open the organizations responsible for the rules and consumer protections discussed above.</p>
+          <div className="grid sm:grid-cols-2 gap-3 mt-5">
+            {[
+              ["NAR: What the settlement means for homebuyers", "https://www.nar.realtor/the-facts/homebuyers-what-the-nar-settlement-means"],
+              ["NAR: Written buyer agreements", "https://www.nar.realtor/the-facts/written-buyer-agreements-101"],
+              ["Tennessee Real Estate Commission", "https://www.tn.gov/commerce/regboards/trec.html"],
+              ["HUD: Fair-housing rights", "https://www.hud.gov/helping-americans/fair-housing-act-overview"],
+            ].map(([label, href]) => <a key={href} href={href} target="_blank" rel="noreferrer" className="rounded-xl border border-border p-4 text-sm font-bold hover:border-primary/40 hover:bg-primary/5 flex items-start justify-between gap-3">{label}<ExternalLink className="h-4 w-4 shrink-0 text-primary" /></a>)}
+          </div>
+        </section>
+
         <div className="p-5 rounded-2xl border border-amber-200 dark:border-amber-800/40 bg-amber-50/50 dark:bg-amber-900/10">
           <div className="flex gap-3 items-start">
             <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold text-amber-800 dark:text-amber-300 mb-1">Important Disclaimer</p>
               <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
-                This information is provided for educational purposes only and reflects the state of law and industry rules as of mid-2024 through 2025. Real estate law varies by state, and the legal landscape is still evolving. Nothing in this section constitutes legal advice. If you have concerns about agent representation, commissions, or your rights in a transaction, consult a licensed real estate attorney in your state.
+                This information is general education, not legal advice. Real-estate law, forms, deadlines, brokerage practices, and MLS requirements can vary and change. Confirm transaction-specific questions with your agent, closing professional, lender, or a licensed Tennessee real-estate attorney.
               </p>
             </div>
           </div>

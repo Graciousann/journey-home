@@ -67,6 +67,7 @@ export default function JourneyStepDetail() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const [noteText, setNoteText] = useState("");
+  const [checkAnnouncement, setCheckAnnouncement] = useState("");
 
   useEffect(() => {
     setNoteText("");
@@ -135,9 +136,10 @@ export default function JourneyStepDetail() {
   };
 
   const toggleCheck = (idx: number) => {
+    const next = !checkedItems[idx];
     setChecklistItem.mutate(
-      { id, stepNumber, itemIndex: idx, isChecked: !checkedItems[idx] },
-      { onSuccess: () => queryClient.invalidateQueries({ queryKey: getStepChecklistQueryKey(id, stepNumber) }) },
+      { id, stepNumber, itemIndex: idx, isChecked: next },
+      { onSuccess: () => { setCheckAnnouncement(`${content?.checklist?.[idx] || "Checklist item"} ${next ? "completed" : "reopened"}.`); queryClient.invalidateQueries({ queryKey: getStepChecklistQueryKey(id, stepNumber) }); } },
     );
   };
 
@@ -305,6 +307,7 @@ export default function JourneyStepDetail() {
               </CardTitle>
             </CardHeader>
             <CardContent>
+              <p className="sr-only" aria-live="polite">{checkAnnouncement}</p>
               <ul className="space-y-3">
                 {content.checklist.map((item: string, i: number) => {
                   const isChecked = checkedItems[i];

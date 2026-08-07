@@ -1,8 +1,9 @@
-import { useParams, Link } from "wouter";
+import { useParams, Link, useLocation } from "wouter";
+import { useState } from "react";
 import {
   useGetJourney, useGetJourneyProgress, useListJourneySteps, useUpdateJourneyStep,
-  useUpdateJourney, useResetJourney, exportJourneyData, getGetJourneyProgressQueryKey,
-  getListJourneyStepsQueryKey,
+  useUpdateJourney, useResetJourney, useDeleteJourney, exportJourneyData, getGetJourneyProgressQueryKey,
+  getListJourneyStepsQueryKey, getListJourneysQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import {
   Check, MapPin, ArrowRight, Home, Compass, ChevronLeft, ArrowLeftRight, Flag,
   FolderOpen, CalendarDays, Download, Printer, RotateCcw, LockKeyhole, MessageCircle,
-  Clock3, UserRound,
+  Clock3, UserRound, Pencil, Trash2, Save,
 } from "lucide-react";
 
 const stepGuidance: Record<string, { action: string; owner: string; time: string }> = {
@@ -44,6 +45,8 @@ function shiftDate(date: string, days: number) {
 export default function JourneyDashboard() {
   const { id: rawId } = useParams<{ id: string }>();
   const id = Number(rawId);
+  const [, setLocation] = useLocation();
+  const [editingName, setEditingName] = useState(false); const [draftName, setDraftName] = useState("");
   const queryClient = useQueryClient();
   const { data: journey, isLoading: loadingJourney } = useGetJourney(id, { query: { enabled: !!id } });
   const { data: progress, isLoading: loadingProgress } = useGetJourneyProgress(id, { query: { enabled: !!id } });
@@ -51,6 +54,7 @@ export default function JourneyDashboard() {
   const updateStep = useUpdateJourneyStep();
   const updateJourney = useUpdateJourney();
   const resetJourney = useResetJourney();
+  const deleteJourney = useDeleteJourney();
 
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ["journey", id] });
@@ -75,9 +79,12 @@ export default function JourneyDashboard() {
     if (!window.confirm("Reset this journey? Progress, notes, dates, and document checks on this device will be cleared.")) return;
     resetJourney.mutate({ id }, { onSuccess: refresh });
   };
+  const beginRename = () => { setDraftName(journey.userName); setEditingName(true); };
+  const saveName = () => { if (!draftName.trim()) return; updateJourney.mutate({ id, data: { userName: draftName.trim() } }, { onSuccess: () => { setEditingName(false); refresh(); } }); };
+  const handleDelete = () => { if (!window.confirm(`Delete ${journey.userName}'s journey from this device? This cannot be undone unless you have a backup.`)) return; deleteJourney.mutate({ id }, { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListJourneysQueryKey() }); setLocation("/"); } }); };
 
   return (
-    <div className="container mx-auto px-4 py-8 md:py-12 max-w-5xl opacity-0 animate-fade-in-up">
+    <div className="container mx-auto px-4 pt-8 pb-28 sm:pb-12 md:py-12 max-w-5xl opacity-0 animate-fade-in-up">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-7">
         <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary font-semibold"><ChevronLeft className="h-4 w-4" />All journeys</Link>
         <Link href={`/journey/${id}/documents`} className="inline-flex items-center gap-2 text-sm font-semibold text-primary bg-primary/8 border border-primary/20 px-4 py-2.5 rounded-full"><FolderOpen className="h-4 w-4" />Documents</Link>
@@ -130,6 +137,11 @@ export default function JourneyDashboard() {
             <Button variant="outline" className="rounded-xl" onClick={() => window.print()}><Printer className="h-4 w-4 mr-2" />Print</Button>
           </div>
           <button onClick={handleReset} className="mt-5 text-sm text-muted-foreground hover:text-destructive inline-flex items-center gap-2"><RotateCcw className="h-4 w-4" />Reset this journey</button>
+          <div className="mt-6 pt-5 border-t border-primary/15">
+            <p className="text-sm font-bold mb-3">Manage this journey</p>
+            {editingName ? <div className="flex gap-2"><label htmlFor="journey-name" className="sr-only">Journey name</label><input id="journey-name" value={draftName} onChange={(e) => setDraftName(e.target.value)} className="min-w-0 flex-1 h-10 rounded-lg border border-input bg-background px-3" /><Button size="sm" onClick={saveName}><Save className="h-4 w-4 mr-1" />Save</Button></div> : <button onClick={beginRename} className="text-sm text-primary font-bold inline-flex items-center gap-2"><Pencil className="h-4 w-4" />Rename journey</button>}
+            <button onClick={handleDelete} className="mt-4 block text-sm text-destructive font-bold"><span className="inline-flex items-center gap-2"><Trash2 className="h-4 w-4" />Delete journey</span></button>
+          </div>
         </section>
       </div>
 

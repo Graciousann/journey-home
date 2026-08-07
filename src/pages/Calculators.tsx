@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Calculator, DollarSign, Home, TrendingDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,19 +24,23 @@ function CurrencyInput({
   onChange: (v: string) => void;
   hint?: string;
 }) {
+  const id = useId();
   return (
     <div className="space-y-1.5">
-      <Label className="text-sm font-medium">{label}</Label>
+      <Label htmlFor={id} className="text-sm font-medium">{label}</Label>
       <div className="relative">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
         <Input
+          id={id}
           className="pl-7 bg-background"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="0"
+          inputMode="decimal"
+          aria-describedby={hint ? `${id}-hint` : undefined}
         />
       </div>
-      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+      {hint && <p id={`${id}-hint`} className="text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 }
@@ -103,6 +107,7 @@ function AffordabilityCalculator() {
           <div className="space-y-1.5">
             <Label className="text-sm font-medium">Interest Rate: {rate.toFixed(1)}%</Label>
             <Slider
+              aria-label="Interest rate"
               min={3}
               max={12}
               step={0.1}
@@ -130,7 +135,7 @@ function AffordabilityCalculator() {
           ))}
         </div>
 
-        <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1">
+        <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1" aria-live="polite">
           <ResultRow label="Max monthly housing payment" value={formatCurrency(maxMonthlyHousing)} note="Includes P&I, taxes, insurance (28% of income)" />
           {pmi > 0 && <ResultRow label="Estimated monthly PMI" value={formatCurrency(pmi)} note="Applies when down payment < 20%" />}
           <ResultRow label="Maximum loan amount" value={formatCurrency(Math.max(0, maxLoanAdjusted))} />
@@ -192,12 +197,12 @@ function BuyerNetSheet() {
           <CurrencyInput label="Purchase Price" value={purchasePrice} onChange={setPurchasePrice} />
           <div className="space-y-1.5">
             <Label className="text-sm font-medium">Down Payment: {downPct}% ({formatCurrency(down)})</Label>
-            <Slider min={3} max={30} step={1} value={[downPct]} onValueChange={([v]) => setDownPct(v)} className="mt-3" />
+            <Slider aria-label="Down payment percentage" min={3} max={30} step={1} value={[downPct]} onValueChange={([v]) => setDownPct(v)} className="mt-3" />
             <div className="flex justify-between text-xs text-muted-foreground"><span>3%</span><span>30%</span></div>
           </div>
           <div className="space-y-1.5">
             <Label className="text-sm font-medium">Interest Rate: {rate.toFixed(1)}%</Label>
-            <Slider min={3} max={12} step={0.1} value={[rate]} onValueChange={([v]) => setInterestRate(v.toFixed(1))} className="mt-3" />
+            <Slider aria-label="Interest rate" min={3} max={12} step={0.1} value={[rate]} onValueChange={([v]) => setInterestRate(v.toFixed(1))} className="mt-3" />
             <div className="flex justify-between text-xs text-muted-foreground"><span>3%</span><span>12%</span></div>
           </div>
           <div className="flex gap-3 items-end pb-1">
@@ -209,7 +214,7 @@ function BuyerNetSheet() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1">
+        <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1" aria-live="polite">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Monthly Payment Estimate</p>
           <ResultRow label="Principal & Interest" value={formatCurrency(monthlyPI)} />
           {pmi > 0 && <ResultRow label="PMI (until 20% equity)" value={formatCurrency(pmi)} note="Removed when you reach 20% equity" />}
@@ -281,14 +286,14 @@ function SellerNetSheet() {
           <CurrencyInput label="Mortgage Balance Owed" value={mortgageBalance} onChange={setMortgageBalance} hint="Call your lender for exact payoff amount" />
           <div className="space-y-1.5">
             <Label className="text-sm font-medium">Agent Commission: {agentCommission}%</Label>
-            <Slider min={0} max={8} step={0.25} value={[parseFloat(agentCommission) || 5]} onValueChange={([v]) => setAgentCommission(v.toFixed(2))} className="mt-3" />
+            <Slider aria-label="Agent commission percentage" min={0} max={8} step={0.25} value={[parseFloat(agentCommission) || 5]} onValueChange={([v]) => setAgentCommission(v.toFixed(2))} className="mt-3" />
             <div className="flex justify-between text-xs text-muted-foreground"><span>0%</span><span>8%</span></div>
           </div>
           <CurrencyInput label="Repair / Concession Costs" value={repairs} onChange={setRepairs} hint="Buyer-requested repairs or credits" />
           <CurrencyInput label="Other Buyer Credits" value={otherCredits} onChange={setOtherCredits} hint="Closing cost assistance offered to buyer" />
         </div>
 
-        <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1">
+        <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1" aria-live="polite">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Net Proceeds Breakdown</p>
           <ResultRow label="Sale price" value={formatCurrency(price)} />
           <div className="border-t my-2" />
