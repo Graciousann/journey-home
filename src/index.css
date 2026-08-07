@@ -144,6 +144,15 @@ body {
 
 button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
 
+.skip-link {
+  position: fixed; left: 1rem; top: 1rem; z-index: 100; transform: translateY(-180%);
+  border-radius: .75rem; background: hsl(var(--foreground)); color: hsl(var(--background));
+  padding: .75rem 1rem; font-weight: 700;
+}
+.skip-link:focus { transform: translateY(0); }
+.eyebrow { color: hsl(var(--accent)); font-size: .75rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; margin-bottom: .5rem; }
+.brand-grid { background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 30px 30px; }
+
 :focus-visible {
   outline: 3px solid hsl(var(--primary) / 0.45);
   outline-offset: 3px;
@@ -156,6 +165,7 @@ button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+  .opacity-0[class*="animate-"] { opacity: 1 !important; }
 }
 
 @media print {
