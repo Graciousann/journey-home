@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "home-journey",
+  "name": "journey-home",
   "compatibility_date": "2026-08-07",
   "assets": {
     "directory": "./dist",
