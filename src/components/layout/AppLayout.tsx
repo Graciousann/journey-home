@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Compass, BookOpen, Library, Home, Calculator, Clock, Scale, ChevronDown, Map, Phone } from "lucide-react";
+import { Compass, BookOpen, Library, Calculator, Clock, Scale, ChevronDown, Map, Phone, Mail } from "lucide-react";
 import { ReactNode, useState, useRef, useEffect } from "react";
 
 const navItems = [
@@ -22,12 +22,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
         setMobileOpen(false);
       }
     }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    function keyHandler(e: KeyboardEvent) { if (e.key === "Escape") setMobileOpen(false); }
+    document.addEventListener("mousedown", handler); document.addEventListener("keydown", keyHandler);
+    return () => { document.removeEventListener("mousedown", handler); document.removeEventListener("keydown", keyHandler); };
   }, []);
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background selection:bg-primary/20 selection:text-primary relative">
+      <a href="#main-content" className="skip-link">Skip to main content</a>
       <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-white/90 dark:bg-background/90 backdrop-blur-xl shadow-sm">
         <div className="container mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 text-primary transition-opacity hover:opacity-80 group">
@@ -100,7 +102,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="flex-1 w-full relative z-10">
+      <main id="main-content" tabIndex={-1} className="flex-1 w-full relative z-10">
         {children}
       </main>
 
@@ -129,9 +131,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
           {/* Brokerage disclosure */}
           <div className="mt-8 pt-6 border-t border-border/60 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center">
-            <p className="text-xs text-muted-foreground/70">
-              Benchmark Realty LLC
-            </p>
+            <p className="text-xs text-muted-foreground/70">Benchmark Realty LLC office</p>
             <span className="hidden sm:inline text-muted-foreground/40 text-xs">·</span>
             <p className="text-xs text-muted-foreground/70">
               318 Seaboard Lane, Suite 112, Franklin TN 37067
@@ -141,8 +141,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
               href="tel:6153711544"
               className="text-xs text-muted-foreground/70 hover:text-primary transition-colors"
             >
-              615-371-1544
+              Office: 615-371-1544
             </a>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs">
+            <a href="tel:6157397804" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-primary"><Phone className="h-3.5 w-3.5" />GraceAnn direct: 615-739-7804</a>
+            <a href="mailto:graceann@threshold.homes" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-primary"><Mail className="h-3.5 w-3.5" />graceann@threshold.homes</a>
           </div>
           <p className="mt-4 mx-auto max-w-3xl text-center text-[11px] leading-relaxed text-muted-foreground/70">
             This roadmap is for general education and planning. It is not legal, tax, lending, or financial advice; requirements and timelines vary by transaction and location.
